@@ -29,6 +29,7 @@ name: CI
 permissions:
   contents: read
   packages: write
+  id-token: write
 defaults:
   run:
     shell: bash
@@ -173,12 +174,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
         if: success() && !env.SKIP_JOB
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: "github.event_name == 'push' && github.ref == 'refs/heads/automation/bors/try' && github.repository == 'rust-lang/rust'"
+        with:
+          role-to-assume: "arn:aws:iam::890664054962:role/ci--rust-lang--rust--try-role"
+          aws-region: us-west-1
+      - name: upload artifacts to S3 with OIDC
+        run: src/ci/scripts/upload-artifacts.sh
+        env:
+          S3_PATH_SUFFIX: "-try"
+        if: "github.ref == 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
       - name: upload artifacts to S3
         run: src/ci/scripts/upload-artifacts.sh
         env:
           AWS_ACCESS_KEY_ID: "${{ env.ARTIFACTS_AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', env.ARTIFACTS_AWS_ACCESS_KEY_ID)] }}"
-        if: "success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
+        if: "github.ref != 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
   auto:
     name: "auto - ${{ matrix.name }}"
     env:
@@ -587,12 +599,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
         if: success() && !env.SKIP_JOB
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: "github.event_name == 'push' && github.ref == 'refs/heads/automation/bors/try' && github.repository == 'rust-lang/rust'"
+        with:
+          role-to-assume: "arn:aws:iam::890664054962:role/ci--rust-lang--rust--try-role"
+          aws-region: us-west-1
+      - name: upload artifacts to S3 with OIDC
+        run: src/ci/scripts/upload-artifacts.sh
+        env:
+          S3_PATH_SUFFIX: "-try"
+        if: "github.ref == 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
       - name: upload artifacts to S3
         run: src/ci/scripts/upload-artifacts.sh
         env:
           AWS_ACCESS_KEY_ID: "${{ env.ARTIFACTS_AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', env.ARTIFACTS_AWS_ACCESS_KEY_ID)] }}"
-        if: "success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
+        if: "github.ref != 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
   try:
     name: "try - ${{ matrix.name }}"
     env:
@@ -726,12 +749,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 5
         if: success() && !env.SKIP_JOB
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: "github.event_name == 'push' && github.ref == 'refs/heads/automation/bors/try' && github.repository == 'rust-lang/rust'"
+        with:
+          role-to-assume: "arn:aws:iam::890664054962:role/ci--rust-lang--rust--try-role"
+          aws-region: us-west-1
+      - name: upload artifacts to S3 with OIDC
+        run: src/ci/scripts/upload-artifacts.sh
+        env:
+          S3_PATH_SUFFIX: "-try"
+        if: "github.ref == 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
       - name: upload artifacts to S3
         run: src/ci/scripts/upload-artifacts.sh
         env:
           AWS_ACCESS_KEY_ID: "${{ env.ARTIFACTS_AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', env.ARTIFACTS_AWS_ACCESS_KEY_ID)] }}"
-        if: "success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
+        if: "github.ref != 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')"
   master:
     name: master
     runs-on: ubuntu-latest

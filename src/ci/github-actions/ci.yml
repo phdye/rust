@@ -270,6 +270,25 @@ x--expand-yaml-anchors--remove:
           retention-days: 5
         <<: *step
 
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/automation/bors/try' && github.repository == 'rust-lang/rust'
+        with:
+          role-to-assume: arn:aws:iam::890664054962:role/ci--rust-lang--rust--try-role
+          aws-region: us-west-1
+
+      - name: upload artifacts to S3 with OIDC
+        run: src/ci/scripts/upload-artifacts.sh
+        env:
+          S3_PATH_SUFFIX: "-try"
+        # Adding a condition on DEPLOY=1 or DEPLOY_ALT=1 is not needed as all deploy
+        # builders *should* have the AWS credentials available. Still, explicitly
+        # adding the condition is helpful as this way CI will not silently skip
+        # deploying artifacts from a dist builder if the variables are misconfigured,
+        # erroring about invalid credentials instead.
+        if: github.ref == 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')
+        <<: *step
+
       - name: upload artifacts to S3
         run: src/ci/scripts/upload-artifacts.sh
         env:
@@ -280,7 +299,7 @@ x--expand-yaml-anchors--remove:
         # adding the condition is helpful as this way CI will not silently skip
         # deploying artifacts from a dist builder if the variables are misconfigured,
         # erroring about invalid credentials instead.
-        if: success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')
+        if: github.ref != 'refs/heads/automation/bors/try' && success() && !env.SKIP_JOB && (github.event_name == 'push' || env.DEPLOY == '1' || env.DEPLOY_ALT == '1')
         <<: *step
 
   # These snippets are used by the try-success, try-failure, auto-success and auto-failure jobs.
@@ -324,6 +343,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 defaults:
   run:
