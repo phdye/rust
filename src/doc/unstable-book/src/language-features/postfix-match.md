@@ -16,7 +16,7 @@ fn get_foo() -> Foo {
 }
 
 get_foo().match {
-    Foo::Bar => {},
+    Foo::Bar => { println!("Foo::Bar matches"); },
     Foo::Baz => panic!(),
 }
 ```
